@@ -15,27 +15,23 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="input"
-        android:inputType="textPersonName"
-        android:visibility="gone" />
+        android:inputType="textPersonName" />
 
     <Button
         android:id="@+id/bt_set"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Set"
-        android:visibility="gone" />
+        android:text="Set"/>
 
     <Button
         android:id="@+id/bt_get"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Get Last"
-        android:visibility="gone" />
+        android:text="Get Last"/>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -55,5 +51,6 @@
 <com.coderusk.chattest.TestViews
     android:id="@+id/test_views"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+    android:layout_height="match_parent"
+    android:visibility="gone"/>
 </LinearLayout>

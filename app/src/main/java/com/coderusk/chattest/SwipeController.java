@@ -37,7 +37,8 @@ class SwipeController extends Callback {
     private float gdx = 0;
     private Context context;
 
-    public SwipeController(Context context,SwipeControllerActions buttonsActions) {
+    public SwipeController(Context context,OnDrawCallback onDrawCallback,SwipeControllerActions buttonsActions) {
+        this.onDrawCallback = onDrawCallback;
         this.context = context;
         this.buttonsActions = buttonsActions;
     }
@@ -152,7 +153,13 @@ class SwipeController extends Callback {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void setTouchUpListener(final Canvas c, final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder, final float dX, final float dY, final int actionState, final boolean isCurrentlyActive) {
+    private void setTouchUpListener(final Canvas c,
+                                    final RecyclerView recyclerView,
+                                    final RecyclerView.ViewHolder viewHolder,
+                                    final float dX,
+                                    final float dY,
+                                    final int actionState,
+                                    final boolean isCurrentlyActive) {
         recyclerView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -169,9 +176,9 @@ class SwipeController extends Callback {
 
                     if (buttonsActions != null && buttonInstance != null && buttonInstance.contains(event.getX(), event.getY())) {
                         if (buttonShowedState == ButtonsState.LEFT_VISIBLE) {
-                            buttonsActions.onLeftClicked(viewHolder.getAdapterPosition());
+                            buttonsActions.onLeftClicked(viewHolder.getAdapterPosition(),buttonInstance,event.getX(),event.getY());
                         } else if (buttonShowedState == ButtonsState.RIGHT_VISIBLE) {
-                            buttonsActions.onRightClicked(viewHolder.getAdapterPosition());
+                            buttonsActions.onRightClicked(viewHolder.getAdapterPosition(),buttonInstance,event.getX(),event.getY());
                         }
                     }
                     buttonShowedState = ButtonsState.GONE;
@@ -227,20 +234,25 @@ class SwipeController extends Callback {
     }
 
     private void drawRight(Canvas c, RectF rightButton) {
-
+        if(onDrawCallback!=null)
+        {
+            onDrawCallback.onRightDraw(c,rightButton);
+        }
     }
 
+    public interface OnDrawCallback
+    {
+        void onLeftDraw(Canvas c, RectF leftButton);
+        void onRightDraw(Canvas c, RectF rightButton);
+    }
+
+    private OnDrawCallback onDrawCallback = null;
+
     private void drawLeft(Canvas c, RectF leftButton) {
-        Drawable d = context.getResources().getDrawable(R.drawable.ic_android_black_24dp, null);
-        int dw = d.getIntrinsicWidth();
-        int dh = d.getIntrinsicHeight();
-
-        float w = leftButton.top - leftButton.bottom;
-        float h = leftButton.right - leftButton.left;
-
-
-        d.setBounds((int)leftButton.left, (int)leftButton.top, (int)leftButton.right, (int)leftButton.bottom);
-        d.draw(c);
+        if(onDrawCallback!=null)
+        {
+            onDrawCallback.onLeftDraw(c,leftButton);
+        }
     }
 
     private void drawText(String text, Canvas c, RectF button, Paint p) {

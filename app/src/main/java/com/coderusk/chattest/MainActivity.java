@@ -1,12 +1,22 @@
 package com.coderusk.chattest;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.selection.ItemDetailsLookup;
+import androidx.recyclerview.selection.ItemKeyProvider;
+import androidx.recyclerview.selection.SelectionTracker;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -41,13 +51,16 @@ public class MainActivity extends AppCompatActivity {
         btGet = (Button)findViewById( R.id.bt_get );
         textView = (TextView)findViewById( R.id.textView );
 
+        /////////////////////////////
+
         TestViews testViews = findViewById(R.id.test_views);
         ArrayList<String> data = getData();
         testViews.setData(data);
+        ///////////////////////////////
 
         btSet.setOnClickListener(v -> save());
 
-        btGet.setOnClickListener(v -> get());
+        btGet.setOnClickListener(v -> fetch());
     }
 
     private ArrayList<String> getData() {
@@ -69,6 +82,16 @@ public class MainActivity extends AppCompatActivity {
         chatManager.requestGet(this);
     }
 
+    private void fetch() {
+        Log.d("buggingh","get");
+        chatManager.fetch(this, new ChatManager.ResponseCallback() {
+            @Override
+            public void onResponse(String response) {
+                Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void onReportOfSet(boolean report) {
         String text = textView.getText().toString();
         textView.setText((report?"true":"false")+"\n"+text);
@@ -79,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         String value = etInput.getText().toString();
         chatManager.save(this,value);
     }
-    /****************************************/
+
     @Override
     protected void onPostResume() {
         super.onPostResume();
@@ -104,20 +127,13 @@ public class MainActivity extends AppCompatActivity {
         Log.d("buggingh","onDestroy");
     }
 
-    /**
-     * Dispatch onPause() to fragments.
-     */
+
     @Override
     protected void onPause() {
         super.onPause();
         Log.d("buggingh","onPause");
     }
 
-    /**
-     * Dispatch onResume() to fragments.  Note that for better inter-operation
-     * with older versions of the platform, at the point of this call the
-     * fragments attached to the activity are <em>not</em> resumed.
-     */
     @Override
     protected void onResume() {
         super.onResume();

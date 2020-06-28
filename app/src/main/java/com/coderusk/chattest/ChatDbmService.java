@@ -41,6 +41,11 @@ public class ChatDbmService extends Service {
                     Intent intent = tasks.poll();
                     while (intent!=null)
                     {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         Log.d("buggingh","intent!=null");
                         process(intent);
                         intent = tasks.poll();
@@ -67,11 +72,30 @@ public class ChatDbmService extends Service {
                     case "get":
                         get();
                         break;
+                    case "fetch":
+                        fetch(intent);
+                        break;
                     default:
                         break;
                 }
             }
         }
+    }
+
+    private void fetch(Intent intent)
+    {
+        Log.d("buggingh","fetch");
+        String value = ChatDbm.getLast(this);
+
+        String uid = "";
+        uid = intent.getStringExtra("callback_uid");
+
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction("com.coderusk.chat_dbm_action");
+        broadcastIntent.putExtra("action","fetch");
+        broadcastIntent.putExtra("callback_uid",uid);
+        broadcastIntent.putExtra("value",value);
+        sendBroadcast(broadcastIntent);
     }
 
     /** The service is starting, due to a call to startService() */

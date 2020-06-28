@@ -1,8 +1,11 @@
 package com.coderusk.chattest;
 
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import java.util.HashMap;
 
 public class ChatDbmReceiver extends BroadcastReceiver {
 
@@ -10,6 +13,13 @@ public class ChatDbmReceiver extends BroadcastReceiver {
     {
         void reportOfSet(boolean report);
         void get(String value);
+    }
+
+    private static HashMap<String, ChatManager.ResponseCallback> tempCallbacks = new HashMap<>();
+
+    public static void addTempCallback(String key, ChatManager.ResponseCallback callback)
+    {
+        tempCallbacks.put(key,callback);
     }
 
     private static ChatDbmCallback callback = null;
@@ -34,6 +44,9 @@ public class ChatDbmReceiver extends BroadcastReceiver {
                 case "get":
                     onGet(intent);
                     break;
+                case "fetch":
+                    onFetch(intent);
+                    break;
                 default:
                     break;
             }
@@ -53,6 +66,22 @@ public class ChatDbmReceiver extends BroadcastReceiver {
         if(callback!=null)
         {
             callback.get(value);
+        }
+    }
+
+    private void onFetch(Intent intent) {
+        String value = intent.getStringExtra("value");
+        String uid = intent.getStringExtra("callback_uid");
+        if(tempCallbacks!=null)
+        {
+            if(tempCallbacks.containsKey(uid))
+            {
+                ChatManager.ResponseCallback callback = tempCallbacks.remove(uid);
+                if(callback!=null)
+                {
+                    callback.onResponse(value);
+                }
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,26 +33,48 @@ public class TestViews extends RecyclerView {
     private void setup()
     {
         adapter = new ReceiverRowAdapter(context);
-        /**********************************/
-        setupDragNDrop();
-        swipeForAction();
-        //swipeToDismiss();
-        /**********************************/
+        extraFeaturesSetup();
         setAdapter(adapter);
     }
 
+    public static class RecyclerFeatures
+    {
+
+    }
+
+    private void extraFeaturesSetup() {
+        setupDragNDrop();
+        swipeForAction();
+        swipeToDismiss();
+    }
+
     private void swipeForAction() {
-        SwipeController swipeController = new SwipeController(context,new SwipeControllerActions() {
+        SwipeController swipeController = new SwipeController(context, new SwipeController.OnDrawCallback() {
             @Override
-            public void onRightClicked(int position) {
+            public void onLeftDraw(Canvas c, RectF leftButton) {
+                Paint paint = new Paint();
+                paint.setColor(Color.RED);
+                c.drawRect(leftButton.left,leftButton.top,leftButton.right,leftButton.bottom,paint);
+            }
+
+            @Override
+            public void onRightDraw(Canvas c, RectF rightButton) {
+                Paint paint = new Paint();
+                paint.setColor(Color.GREEN);
+                c.drawRect(rightButton.left,rightButton.top,rightButton.right,rightButton.bottom,paint);
+            }
+        }, new SwipeControllerActions() {
+            @Override
+            public void onRightClicked(int position, RectF rightButton,float x, float y) {
                 values.remove(position);
                 adapter.notifyItemRemoved(position);
                 adapter.notifyItemRangeChanged(position, adapter.getItemCount());
             }
+
             @Override
-            public void onLeftClicked(int position) {
+            public void onLeftClicked(int position, RectF leftButton,float x, float y) {
                 String value = values.get(position);
-                Toast.makeText(context, value, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, value+":"+x+","+y, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -88,13 +111,6 @@ public class TestViews extends RecyclerView {
         addItemDecoration(ver);
 
         addOnScrollListener(new OnScrollListener() {
-            /**
-             * Callback method to be invoked when RecyclerView's scroll state changes.
-             *
-             * @param recyclerView The RecyclerView whose scroll state has changed.
-             * @param newState     The updated scroll state. One of {@link #SCROLL_STATE_IDLE},
-             *                     {@link #SCROLL_STATE_DRAGGING} or {@link #SCROLL_STATE_SETTLING}.
-             */
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -178,82 +194,8 @@ public class TestViews extends RecyclerView {
         commonConstructor(context);
     }
     /****************************************************/
-    public class ItemMoveCallback extends ItemTouchHelper.Callback {
 
-        private final ItemTouchHelperContract mAdapter;
-
-        public ItemMoveCallback(ItemTouchHelperContract adapter) {
-            mAdapter = adapter;
-        }
-
-        @Override
-        public boolean isLongPressDragEnabled() {
-            return true;
-        }
-
-        @Override
-        public boolean isItemViewSwipeEnabled() {
-            return false;
-        }
-
-
-
-        @Override
-        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
-
-        }
-
-        @Override
-        public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
-            int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-            return makeMovementFlags(dragFlags, 0);
-        }
-
-        @Override
-        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
-                              RecyclerView.ViewHolder target) {
-            mAdapter.onRowMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            return true;
-        }
-
-        @Override
-        public void onSelectedChanged(RecyclerView.ViewHolder viewHolder,
-                                      int actionState) {
-
-
-            if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
-                if (viewHolder instanceof ReceiverRowAdapter.MyViewHolder) {
-                    ReceiverRowAdapter.MyViewHolder myViewHolder=
-                            (ReceiverRowAdapter.MyViewHolder) viewHolder;
-                    mAdapter.onRowSelected(myViewHolder);
-                }
-
-            }
-
-            super.onSelectedChanged(viewHolder, actionState);
-        }
-        @Override
-        public void clearView(RecyclerView recyclerView,
-                              RecyclerView.ViewHolder viewHolder) {
-            super.clearView(recyclerView, viewHolder);
-
-            if (viewHolder instanceof ReceiverRowAdapter.MyViewHolder) {
-                ReceiverRowAdapter.MyViewHolder myViewHolder=
-                        (ReceiverRowAdapter.MyViewHolder) viewHolder;
-                mAdapter.onRowClear(myViewHolder);
-            }
-        }
-
-
-
-    }public interface ItemTouchHelperContract {
-
-        void onRowMoved(int fromPosition, int toPosition);
-        void onRowSelected(ReceiverRowAdapter.MyViewHolder myViewHolder);
-        void onRowClear(ReceiverRowAdapter.MyViewHolder myViewHolder);
-
-    }
-    class ReceiverRowAdapter extends RecyclerView.Adapter<ReceiverRowAdapter.MyViewHolder> implements ItemTouchHelperContract{
+    class ReceiverRowAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ItemMoveCallback.ItemTouchHelperContract {
         private int selectedIndex = -1;
         private Context context;
 
@@ -280,10 +222,11 @@ public class TestViews extends RecyclerView {
             return vh;
         }
 
+
         @Override
-        public void onBindViewHolder(MyViewHolder holder, final int position) {
+        public void onBindViewHolder(ViewHolder holder, final int position) {
             final String value = values.get(position);
-            holder.textView.setText(value);
+            ((MyViewHolder)holder).textView.setText(value);
         }
 
         @Override
@@ -294,7 +237,7 @@ public class TestViews extends RecyclerView {
             }
             return values.size();
         }
-
+        /****************************************************************/
         @Override
         public void onRowMoved(int fromPosition, int toPosition) {
             if (fromPosition < toPosition) {
@@ -310,16 +253,17 @@ public class TestViews extends RecyclerView {
         }
 
         @Override
-        public void onRowSelected(MyViewHolder myViewHolder) {
-            myViewHolder.textView.setBackgroundColor(Color.GRAY);
+        public void onRowSelected(RecyclerView.ViewHolder myViewHolder) {
+            ((MyViewHolder)myViewHolder).textView.setBackgroundColor(Color.GRAY);
 
         }
 
         @Override
-        public void onRowClear(MyViewHolder myViewHolder) {
-            myViewHolder.textView.setBackgroundColor(Color.WHITE);
+        public void onRowClear(RecyclerView.ViewHolder myViewHolder) {
+            ((MyViewHolder)myViewHolder).textView.setBackgroundColor(Color.WHITE);
 
         }
+        /*********************************************************************/
     }
 
 }
